@@ -1,0 +1,12 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "blog-sam-custom-namespace-<anystring>"
+s3_prefix = "blog-sam-custom-namespace-<anystring>"
+region = "us-east-1"
+capabilities = "CAPABILITY_NAMED_IAM"
+parameter_overrides = """
+  Environment=<anystring>
+  NodeEnv=<anystring>
+"""

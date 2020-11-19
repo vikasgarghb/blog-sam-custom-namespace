@@ -1,0 +1,13 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "blog-sam-custom-namespace-dev"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-s7lq825ncn5b"
+s3_prefix = "blog-sam-custom-namespace-dev"
+region = "us-east-1"
+capabilities = "CAPABILITY_NAMED_IAM"
+parameter_overrides = """
+  Environment=dev
+  NodeEnv=dev
+"""

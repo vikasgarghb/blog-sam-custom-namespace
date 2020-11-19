@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  blog-sam-custom-namespace
+
+Parameters:
+  Environment:
+    Description: Environment Type
+    Type: String
+    Default: sandbox
+
+  NodeEnv:
+    Description: Node Runtime Environment
+    Type: String
+    Default: sandbox
+
+Globals:
+  Function:
+    Runtime: nodejs12.x
+    Timeout: 60
+    MemorySize: 128
+    Environment:
+      Variables:
+        ENV: !Ref Environment
+        NODE_ENV: !Ref NodeEnv
+
+Resources:
+  BlogSamCustomNamespaceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub blog-sam-custom-namespace-${Environment}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - logs.us-east-1.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: !Sub blog-sam-custom-namespace-s3-policy-${Environment}
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::blog-sam-custom-namespace-bucket-${Environment}
+              - Effect: Allow
+                Action: s3:*Object
+                Resource:
+                  - !Sub arn:aws:s3:::blog-sam-custom-namespace-bucket-${Environment}/*
+
+  S3UploaderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: build/s3-uploader
+      Handler: index.handler
+      Role: !Sub ${BlogSamCustomNamespaceRole.Arn}
+
+  S3RetrieverFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: build/s3-retriever
+      Handler: index.handler
+      Role: !Sub ${BlogSamCustomNamespaceRole.Arn}
+
+  BlogSamCustomNamespaceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub blog-sam-custom-namespace-bucket-${Environment}
+
+Outputs:
+  S3UploaderFunction:
+    Description: S3 Uploader Function
+    Value: !Ref S3UploaderFunction
+
+  S3RetrieverFunction:
+    Description: S3 Retriever Function
+    Value: !Ref S3RetrieverFunction
+
+  BlogSamCustomNamespaceBucket:
+    Description: S3 Bucket
+    Value: !GetAtt BlogSamCustomNamespaceBucket.Arn
